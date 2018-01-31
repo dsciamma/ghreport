@@ -3,6 +3,7 @@ package ghreport
 import (
 	"errors"
 	"fmt"
+  "strings"
 	//"sort"
 	"context"
 	"time"
@@ -69,6 +70,26 @@ func (a ByAge) Less(i, j int) bool {
 	ti, _ := time.Parse(ISO_FORM, a[i].CreatedAt)
 	tj, _ := time.Parse(ISO_FORM, a[j].CreatedAt)
 	return tj.After(ti)
+}
+
+// ByMerge allows to sort PRStruct by merged date
+type ByMerge []PRStruct
+
+func (a ByMerge) Len() int      { return len(a) }
+func (a ByMerge) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByMerge) Less(i, j int) bool {
+  ti, _ := time.Parse(ISO_FORM, a[i].MergedAt)
+  tj, _ := time.Parse(ISO_FORM, a[j].MergedAt)
+  return tj.After(ti)
+}
+
+// ByTitle allows to sort PRStruct by title
+type ByTitle []PRStruct
+
+func (a ByTitle) Len() int      { return len(a) }
+func (a ByTitle) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByTitle) Less(i, j int) bool {
+  return strings.Compare(strings.ToLower(a[i].Title), strings.ToLower(a[j].Title)) < 0
 }
 
 type repositoriesResponseStruct struct {
@@ -441,7 +462,7 @@ func (gr *ActivityReport) Run() error {
 
 	gr.ReportDate = now
 
-	repositories, err := gr.listSubsetRepositories(ctx, client, gr.Organization, "")
+	repositories, err := gr.listRepositories(ctx, client, gr.Organization, "")
 	if err != nil {
 		return errors.New(fmt.Sprintf("An error occured during repositories listing %v\n", err))
 	} else {
